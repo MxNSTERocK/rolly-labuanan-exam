@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Youtube API</title>
+    <link rel="icon" href="image/yt-icon.png" type="image/icon type" />
+    <link rel="stylesheet" href="styles/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar">
+        <div class="logo-container">
+          <img src="image/yt-icon.png" alt="X Logo" class="logo-x" />
+        </div>
+        <div class="settings">
+          <i class="fas fa-cog"></i>
+        </div>
+      </div>
+      <div class="main-content">
+        <div class="header">
+          <i class="fa fa-arrow-left" aria-hidden="true"></i>
+          <h1>
+            <img
+              src="image/yt-icon.png"
+              alt="X Logo"
+              class="logo-x-header"
+            />YouTube
+          </h1>
+          <div class="search-container">
+            <input
+              type="text"
+              class="search-bar"
+              placeholder="Search"
+              v-model="searchQuery"
+              @input="filterVideos"
+            />
+            <i class="fa fa-search search-icon" aria-hidden="true"></i>
+          </div>
+        </div>
+        <div class="horizontal-line"></div>
+        <div class="post">
+          <div id="app">
+            <div v-if="videos.length">
+              <ul>
+                <li
+                  v-for="video in paginatedVideos"
+                  :key="video.id"
+                  class="video-item"
+                >
+                  <img
+                    :src="video.thumbnail"
+                    alt="Thumbnail"
+                    class="video-thumbnail"
+                  />
+                  <div class="video-info">
+                    <a :href="video.video_link" target="_blank"
+                      >{{ video.title }}</a
+                    >
+                    <p>{{ video.description }}</p>
+                  </div>
+                </li>
+              </ul>
+              <div class="content-button">
+                <button @click="prevPage($event)" :disabled="currentPage === 1">
+                  Previous
+                </button>
+                <button
+                  v-for="page in totalPages"
+                  :key="page"
+                  @click="goToPage(page, $event)"
+                  :class="{ active: currentPage === page }"
+                >
+                  {{ page }}
+                </button>
+                <button
+                  @click="nextPage($event)"
+                  :disabled="currentPage === totalPages"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="horizontal-line"></div>
+        <div class="share-thoughts">
+          <img src="image/avatar.png" alt="X Logo" class="logo-x" />
+          <input type="text" placeholder="Share your thoughts" />&nbsp;
+          <i class="far fa-image"></i>
+          <i class="far fa">gif</i>
+          <i class="far fa-comment"></i>
+        </div>
+        <div class="horizontal-line"></div>
+        <br />
+        <div class="comments">
+          <p>Nothing to see here — yet</p>
+          <p>Check back later to see posts about this.</p>
+          <br />
+        </div>
+      </div>
+      <div class="right-sidebar">
+        <div class="new-to-x">
+          <h2>New to X?</h2>
+          <p>Sign up now to get your own personalized timeline!</p>
+          <button>
+            <img
+              src="image/google-logo.png"
+              alt="Google Logo"
+              class="logo-x"
+            />Sign up with Google
+          </button>
+          <button>
+            <img
+              src="image/apple-logo.png"
+              alt="Apple Logo"
+              class="logo-x"
+            />Sign up with Apple
+          </button>
+          <button>Create account</button>
+          <p>
+            By signing up, you agree to the <a href="#">Terms of Service</a> and
+            <a href="#">Privacy Policy</a>, including
+            <a href="#">Cookie Use</a>.
+          </p>
+        </div>
+        <div class="retry">
+          <p>Something went wrong. Try reloading.</p>
+          <button>Retry</button>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="footer-content">
+        <div class="footer-text">
+          <p>Don’t miss what’s happening</p>
+          <p>People on X are the first to know.</p>
+        </div>
+        <div class="footer-buttons">
+          <button>Log in</button>
+          <button>Sign up</button>
+        </div>
+      </div>
+    </footer>
+  </body>
+  <script>
+    new Vue({
+      el: "#app",
+      data: {
+        channel: null,
+        videos: [],
+        currentPage: 1,
+        videosPerPage: 20,
+      },
+      computed: {
+        totalPages() {
+          return Math.ceil(this.videos.length / this.videosPerPage);
+        },
+        paginatedVideos() {
+          const start = (this.currentPage - 1) * this.videosPerPage;
+          const end = start + this.videosPerPage;
+          return this.videos.slice(start, end);
+        },
+      },
+      methods: {
+        fetchChannelData() {
+          fetch("youtube_channel_json.php")
+            .then((response) => response.json())
+            .then((data) => {
+              this.channel = data.channel;
+              this.videos = data.videos;
+            });
+        },
+        handleImageError(video) {
+          video.thumbnail = "path_to_default_image.jpg";
+        },
+        prevPage(event) {
+          event.preventDefault();
+          const scrollPosition = window.scrollY;
+          if (this.currentPage > 1) {
+            this.currentPage--;
+            this.$nextTick(() => {
+              window.scrollTo(0, scrollPosition);
+            });
+          }
+        },
+        nextPage(event) {
+          event.preventDefault();
+          const scrollPosition = window.scrollY;
+          if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+            this.$nextTick(() => {
+              window.scrollTo(0, scrollPosition);
+            });
+          }
+        },
+        goToPage(page, event) {
+          event.preventDefault();
+          const scrollPosition = window.scrollY;
+          this.currentPage = page;
+          this.$nextTick(() => {
+            window.scrollTo(0, scrollPosition);
+          });
+        },
+      },
+      created() {
+        this.fetchChannelData();
+      },
+    });
+  </script>
+</html>
